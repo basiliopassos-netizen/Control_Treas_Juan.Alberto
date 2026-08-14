@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Tareas Diarias</title>
+    <style>
+        :root {
+            --primary: #25D366;
+            --dark: #121212;
+            --card: #1e1e1e;
+            --text: #ffffff;
+            --subtext: #aaaaaa;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--dark);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: var(--card);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        label {
+            font-size: 0.9em;
+            color: var(--subtext);
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background-color: #2a2a2a;
+            color: var(--text);
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: opacity 0.2s;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .btn-add {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-whatsapp {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-download {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #333;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .task-time {
+            font-size: 0.85em;
+            color: var(--subtext);
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #ff5252;
+            font-size: 1.2em;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+            padding: 4px 8px;
+        }
+
+        .total-container {
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>📋 Control de Día</h1>
+
+    <!-- Formulario de Registro -->
+    <div class="card">
+        <label for="taskName">Acción / Tarea Realizada</label>
+        <input type="text" id="taskName" placeholder="Ej: Revisión de plantilla...">
+
+        <label for="taskDuration">Tiempo invertido (en minutos)</label>
+        <input type="number" id="taskDuration" placeholder="Ej: 45">
+
+        <button class="btn-add" onclick="addTask()">➕ Añadir Tarea</button>
+    </div>
+
+    <!-- Lista de Tareas -->
+    <div class="card">
+        <h2>Tareas de Hoy</h2>
+        <div id="taskList"></div>
+        <div class="total-container" id="totalTime">Tiempo Total: 0 min</div>
+    </div>
+
+    <!-- Exportar y Compartir -->
+    <div class="card">
+        <button class="btn-whatsapp" onclick="sendWhatsApp()">📲 Enviar Informe por WhatsApp</button>
+        <button class="btn-download" onclick="downloadReport()">📥 Descargar Informe (.txt)</button>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || [];
+
+        function renderTasks() {
+            const listEl = document.getElementById('taskList');
+            listEl.innerHTML = '';
+            let total = 0;
+
+            if (tasks.length === 0) {
+                listEl.innerHTML = '<p style="text-align:center; color: var(--subtext);">No hay tareas registradas hoy.</p>';
+            }
+
+            tasks.forEach((task, index) => {
+                total += parseInt(task.duration);
+                listEl.innerHTML += `
+                    <div class="task-item">
+                        <div class="task-info">
+                            <strong>${task.name}</strong>
+                            <span class="task-time">⏱️ ${task.duration} min</span>
+                        </div>
+                        <button class="btn-delete" onclick="deleteTask(${index})">🗑️</button>
+                    </div>
+                `;
+            });
+
+            document.getElementById('totalTime').innerText = `Tiempo Total: ${total} min (${(total/60).toFixed(1)} h)`;
+            localStorage.setItem('dailyTasks', JSON.stringify(tasks));
+        }
+
+        function addTask() {
+            const nameInput = document.getElementById('taskName');
+            const durationInput = document.getElementById('taskDuration');
+
+            if (!nameInput.value.trim() || !durationInput.value) {
+                alert('Por favor, rellena ambos campos.');
+                return;
+            }
+
+            tasks.push({
+                name: nameInput.value.trim(),
+                duration: parseInt(durationInput.value)
+            });
+
+            nameInput.value = '';
+            durationInput.value = '';
+            renderTasks();
+        }
+
+        function deleteTask(index) {
+            tasks.splice(index, 1);
+            renderTasks();
+        }
+
+        function generateTextReport() {
+            const date = new Date().toLocaleDateString('es-ES');
+            let report = `📊 *INFORME DIARIO DE TAREAS* (${date})\n`;
+            report += `-----------------------------------\n`;
+
+            let total = 0;
+            tasks.forEach((t, i) => {
+                report += `${i + 1}. ${t.name} -> *${t.duration} min*\n`;
+                total += t.duration;
+            });
+
+            report += `-----------------------------------\n`;
+            report += `⏱️ *Tiempo Total:* ${total} min (${(total/60).toFixed(1)} h)`;
+            return report;
+        }
+
+        function sendWhatsApp() {
+            if (tasks.length === 0) {
+                alert('No hay tareas para enviar.');
+                return;
+            }
+            const text = encodeURIComponent(generateTextReport());
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+
+        function downloadReport() {
+            if (tasks.length === 0) {
+                alert('No hay tareas para descargar.');
+                return;
+            }
+            const date = new Date().toISOString().split('T')[0];
+            const element = document.createElement('a');
+            const file = new Blob([generateTextReport().replace(/\*/g, '')], {type: 'text/plain'});
+            element.href = URL.createObjectURL(file);
+            element.download = `informe_tareas_${date}.txt`;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        // Carga inicial
+        renderTasks();
+    </script>
+</body>
+</html>
