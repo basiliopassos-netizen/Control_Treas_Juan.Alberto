@@ -2,252 +2,331 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Tareas Diarias</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro de Tareas</title>
+
+    <!-- Librería externa para la exportación de archivos PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         :root {
-            --primary: #25D366;
-            --dark: #121212;
-            --card: #1e1e1e;
-            --text: #ffffff;
-            --subtext: #aaaaaa;
+            --primary: #0d47a1;
+            --bg: #e0e5ec;
+            --text: #2d3748;
+            --shadow-light: #ffffff;
+            --shadow-dark: #a3b1c6;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--dark);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 16px;
+            padding: 15px;
+            box-sizing: border-box;
         }
 
-        h1, h2 {
+        h1 {
             text-align: center;
+            font-size: 20px;
+            color: var(--primary);
+            text-transform: uppercase;
             margin-bottom: 20px;
         }
 
-        .card {
-            background-color: var(--card);
-            padding: 16px;
-            border-radius: 12px;
+        /* Estilo 3D Neumórfico para tarjetas */
+        .card-3d {
+            background: var(--bg);
+            border-radius: 20px;
+            padding: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            box-shadow: 8px 8px 16px var(--shadow-dark), 
+                        -8px -8px 16px var(--shadow-light);
         }
 
         label {
-            font-size: 0.9em;
-            color: var(--subtext);
+            font-weight: bold;
+            font-size: 13px;
             display: block;
-            margin-bottom: 6px;
+            margin-top: 5px;
+            color: #4a5568;
+            text-transform: uppercase;
         }
 
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background-color: #2a2a2a;
-            color: var(--text);
-            box-sizing: border-box;
-            font-size: 1em;
-        }
-
-        button {
+        input[type="date"], input[type="text"], input[type="time"] {
             width: 100%;
             padding: 14px;
+            margin-top: 6px;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
+            border-radius: 12px;
+            background: var(--bg);
+            box-shadow: inset 4px 4px 8px var(--shadow-dark), 
+                        inset -4px -4px 8px var(--shadow-light);
+            font-size: 16px;
             font-weight: bold;
+            color: var(--text);
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .time-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        /* Botones táctiles interactivos */
+        .btn-3d {
+            width: 100%;
+            padding: 16px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 15px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            background: var(--primary);
+            box-shadow: 5px 5px 10px var(--shadow-dark), 
+                        -5px -5px 10px var(--shadow-light);
             cursor: pointer;
-            margin-bottom: 10px;
-            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        button:active {
-            opacity: 0.8;
+        .btn-3d:active {
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.3);
         }
 
-        .btn-add {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .btn-whatsapp {
-            background-color: var(--primary);
-            color: white;
-        }
-
-        .btn-download {
-            background-color: #6c757d;
-            color: white;
-        }
+        .btn-mic { background: #c62828; }
+        .btn-pdf { background: #2e7d32; }
+        .btn-ws  { background: #25d366; }
 
         .task-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #333;
+            padding: 10px 0;
+            border-bottom: 1px solid #cbd5e0;
+            font-size: 14px;
         }
 
-        .task-item:last-child {
-            border-bottom: none;
-        }
-
-        .task-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .task-time {
-            font-size: 0.85em;
-            color: var(--subtext);
-        }
-
-        .btn-delete {
-            background: none;
-            border: none;
-            color: #ff5252;
-            font-size: 1.2em;
-            cursor: pointer;
-            width: auto;
-            margin: 0;
-            padding: 4px 8px;
-        }
-
-        .total-container {
+        .total-box {
+            text-align: center;
+            font-size: 16px;
             font-weight: bold;
-            text-align: right;
-            margin-top: 10px;
             color: var(--primary);
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-    <h1>📋 Control de Día</h1>
+    <h1>📋 Control de Tareas</h1>
 
-    <!-- Formulario de Registro -->
-    <div class="card">
-        <label for="taskName">Acción / Tarea Realizada</label>
-        <input type="text" id="taskName" placeholder="Ej: Revisión de plantilla...">
-
-        <label for="taskDuration">Tiempo invertido (en minutos)</label>
-        <input type="number" id="taskDuration" placeholder="Ej: 45">
-
-        <button class="btn-add" onclick="addTask()">➕ Añadir Tarea</button>
+    <!-- Selección de Fecha -->
+    <div class="card-3d">
+        <label for="fecha">Fecha de Registro</label>
+        <input type="date" id="fecha">
     </div>
 
-    <!-- Lista de Tareas -->
-    <div class="card">
-        <h2>Tareas de Hoy</h2>
-        <div id="taskList"></div>
-        <div class="total-container" id="totalTime">Tiempo Total: 0 min</div>
+    <!-- Entrada por Texto o Voz -->
+    <div class="card-3d">
+        <label for="tarea">Descripción de la Tarea</label>
+        <input type="text" id="tarea" placeholder="Escribe o dicta la tarea...">
+        <button type="button" class="btn-3d btn-mic" onclick="dictarVoz()">
+            🎤 Dictar por Voz
+        </button>
     </div>
 
-    <!-- Exportar y Compartir -->
-    <div class="card">
-        <button class="btn-whatsapp" onclick="sendWhatsApp()">📲 Enviar Informe por WhatsApp</button>
-        <button class="btn-download" onclick="downloadReport()">📥 Descargar Informe (.txt)</button>
+    <!-- Selección de Horas (Relojes) -->
+    <div class="card-3d">
+        <label>Control Horario</label>
+        <div class="time-container">
+            <div>
+                <label style="font-size: 10px;">Inicio</label>
+                <input type="time" id="h-inicio" value="08:00">
+            </div>
+            <div>
+                <label style="font-size: 10px;">Fin</label>
+                <input type="time" id="h-fin" value="09:00">
+            </div>
+        </div>
+        <button type="button" class="btn-3d" onclick="agregarTarea()">
+            ➕ Añadir Tarea
+        </button>
     </div>
+
+    <!-- Lista de Tareas y Totales -->
+    <div class="card-3d">
+        <label>Tareas Registradas</label>
+        <div id="lista-tareas"></div>
+        <div class="total-box" id="sumatorio-total">Total: 0h 0m</div>
+    </div>
+
+    <!-- Acciones -->
+    <button type="button" class="btn-3d btn-pdf" onclick="generarPDF()">
+        📄 Generar PDF
+    </button>
+    <button type="button" class="btn-3d btn-ws" onclick="enviarWhatsApp()">
+        💬 Compartir por WhatsApp
+    </button>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('dailyTasks')) || [];
+        let tareas = [];
 
-        function renderTasks() {
-            const listEl = document.getElementById('taskList');
-            listEl.innerHTML = '';
-            let total = 0;
+        window.onload = () => {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha').value = hoy;
+        };
 
-            if (tasks.length === 0) {
-                listEl.innerHTML = '<p style="text-align:center; color: var(--subtext);">No hay tareas registradas hoy.</p>';
+        function dictarVoz() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert("El navegador de tu Android no soporta reconocimiento de voz directo.");
+                return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const texto = event.results[0][0].transcript;
+                document.getElementById('tarea').value = texto.toUpperCase();
+            };
+        }
+
+        function agregarTarea() {
+            const desc = document.getElementById('tarea').value.trim();
+            const hIni = document.getElementById('h-inicio').value;
+            const hFin = document.getElementById('h-fin').value;
+
+            if (!desc) {
+                alert("Escribe o dicta una tarea primero.");
+                return;
             }
 
-            tasks.forEach((task, index) => {
-                total += parseInt(task.duration);
-                listEl.innerHTML += `
+            const [h1, m1] = hIni.split(':').map(Number);
+            const [h2, m2] = hFin.split(':').map(Number);
+            let minInicio = h1 * 60 + m1;
+            let minFin = h2 * 60 + m2;
+
+            if (minFin <= minInicio) {
+                alert("La hora de fin debe ser posterior a la de inicio.");
+                return;
+            }
+
+            const duracionMin = minFin - minInicio;
+
+            tareas.push({
+                descripcion: desc.toUpperCase(),
+                inicio: hIni,
+                fin: hFin,
+                minutos: duracionMin
+            });
+
+            document.getElementById('tarea').value = '';
+            actualizarLista();
+        }
+
+        function actualizarLista() {
+            const contenedor = document.getElementById('lista-tareas');
+            contenedor.innerHTML = '';
+            let totalMinutos = 0;
+
+            tareas.forEach((t, index) => {
+                totalMinutos += t.minutos;
+                const hrs = Math.floor(t.minutos / 60);
+                const mins = t.minutos % 60;
+                const tiempoTexto = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
+
+                contenedor.innerHTML += `
                     <div class="task-item">
-                        <div class="task-info">
-                            <strong>${task.name}</strong>
-                            <span class="task-time">⏱️ ${task.duration} min</span>
+                        <div>
+                            <strong>${t.descripcion}</strong><br>
+                            <small>${t.inicio} - ${t.fin}</small>
                         </div>
-                        <button class="btn-delete" onclick="deleteTask(${index})">🗑️</button>
+                        <div>
+                            <span style="font-weight:bold; color:var(--primary);">${tiempoTexto}</span>
+                            <button onclick="eliminarTarea(${index})" style="border:none; background:none; color:red; margin-left:8px;">❌</button>
+                        </div>
                     </div>
                 `;
             });
 
-            document.getElementById('totalTime').innerText = `Tiempo Total: ${total} min (${(total/60).toFixed(1)} h)`;
-            localStorage.setItem('dailyTasks', JSON.stringify(tasks));
+            const totalHrs = Math.floor(totalMinutos / 60);
+            const totalMins = totalMinutos % 60;
+            document.getElementById('sumatorio-total').innerText = `Total Horas: ${totalHrs}h ${totalMins}m`;
         }
 
-        function addTask() {
-            const nameInput = document.getElementById('taskName');
-            const durationInput = document.getElementById('taskDuration');
+        function eliminarTarea(index) {
+            tareas.splice(index, 1);
+            actualizarLista();
+        }
 
-            if (!nameInput.value.trim() || !durationInput.value) {
-                alert('Por favor, rellena ambos campos.');
-                return;
-            }
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const fecha = document.getElementById('fecha').value;
 
-            tasks.push({
-                name: nameInput.value.trim(),
-                duration: parseInt(durationInput.value)
+            doc.setFontSize(16);
+            doc.text("INFORME DE TAREAS Y HORARIOS", 20, 20);
+            doc.setFontSize(11);
+            doc.text(`Fecha: ${fecha}`, 20, 28);
+
+            let y = 40;
+            doc.text("Tarea", 20, y);
+            doc.text("Horario", 120, y);
+            doc.text("Duración", 160, y);
+            doc.line(20, y + 2, 190, y + 2);
+
+            y += 10;
+            let totalMinutos = 0;
+
+            tareas.forEach(t => {
+                totalMinutos += t.minutos;
+                const hrs = Math.floor(t.minutos / 60);
+                const mins = t.minutos % 60;
+                const durStr = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
+
+                doc.text(t.descripcion.substring(0, 30), 20, y);
+                doc.text(`${t.inicio} - ${t.fin}`, 120, y);
+                doc.text(durStr, 160, y);
+                y += 8;
             });
 
-            nameInput.value = '';
-            durationInput.value = '';
-            renderTasks();
+            const totalHrs = Math.floor(totalMinutos / 60);
+            const totalMins = totalMinutos % 60;
+            doc.line(20, y + 2, 190, y + 2);
+            y += 10;
+            doc.setFontSize(13);
+            doc.text(`SUMATORIO TOTAL: ${totalHrs}h ${totalMins}m`, 20, y);
+
+            doc.save(`Registro_${fecha}.pdf`);
         }
 
-        function deleteTask(index) {
-            tasks.splice(index, 1);
-            renderTasks();
-        }
+        function enviarWhatsApp() {
+            const fecha = document.getElementById('fecha').value;
+            let totalMinutos = 0;
+            let texto = `*REGISTRO DE TAREAS (${fecha})*\n\n`;
 
-        function generateTextReport() {
-            const date = new Date().toLocaleDateString('es-ES');
-            let report = `📊 *INFORME DIARIO DE TAREAS* (${date})\n`;
-            report += `-----------------------------------\n`;
-
-            let total = 0;
-            tasks.forEach((t, i) => {
-                report += `${i + 1}. ${t.name} -> *${t.duration} min*\n`;
-                total += t.duration;
+            tareas.forEach(t => {
+                totalMinutos += t.minutos;
+                const hrs = Math.floor(t.minutos / 60);
+                const mins = t.minutos % 60;
+                const durStr = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
+                texto += `• *${t.descripcion}*\n  ⏱️ ${t.inicio} a ${t.fin} (${durStr})\n`;
             });
 
-            report += `-----------------------------------\n`;
-            report += `⏱️ *Tiempo Total:* ${total} min (${(total/60).toFixed(1)} h)`;
-            return report;
-        }
+            const totalHrs = Math.floor(totalMinutos / 60);
+            const totalMins = totalMinutos % 60;
+            texto += `\n*TOTAL:* ${totalHrs}h ${totalMins}m`;
 
-        function sendWhatsApp() {
-            if (tasks.length === 0) {
-                alert('No hay tareas para enviar.');
-                return;
-            }
-            const text = encodeURIComponent(generateTextReport());
-            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+            const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+            window.open(url, '_blank');
         }
-
-        function downloadReport() {
-            if (tasks.length === 0) {
-                alert('No hay tareas para descargar.');
-                return;
-            }
-            const date = new Date().toISOString().split('T')[0];
-            const element = document.createElement('a');
-            const file = new Blob([generateTextReport().replace(/\*/g, '')], {type: 'text/plain'});
-            element.href = URL.createObjectURL(file);
-            element.download = `informe_tareas_${date}.txt`;
-            document.body.appendChild(element);
-            element.click();
-            document.body.removeChild(element);
-        }
-
-        // Carga inicial
-        renderTasks();
     </script>
 </body>
 </html>
