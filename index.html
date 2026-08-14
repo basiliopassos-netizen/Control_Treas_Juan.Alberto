@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Registro de Tareas Móvil</title>
+    <title>Control de Tareas Móvil</title>
 
-    <!-- Librería jsPDF para generación de documentos en el navegador -->
+    <!-- Librería externa para generación de documentos PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
@@ -22,33 +22,32 @@
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 10px;
+            padding: 12px;
             box-sizing: border-box;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
         h1 {
             text-align: center;
-            font-size: 16px;
+            font-size: 20px;
             color: var(--primary);
             text-transform: uppercase;
-            margin: 2px 0 8px 0;
+            margin: 5px 0 15px 0;
         }
 
+        /* Tarjetas estilo Neumórfico 3D */
         .card-3d {
             background: var(--bg);
-            border-radius: 14px;
-            padding: 10px;
-            margin-bottom: 8px;
-            box-shadow: 4px 4px 8px var(--shadow-dark), 
-                        -4px -4px 8px var(--shadow-light);
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 6px 6px 12px var(--shadow-dark), 
+                        -6px -6px 12px var(--shadow-light);
         }
 
         label {
             font-weight: bold;
-            font-size: 10px;
+            font-size: 12px;
             display: block;
             margin-top: 2px;
             color: #4a5568;
@@ -57,14 +56,14 @@
 
         input[type="date"], input[type="text"], input[type="time"] {
             width: 100%;
-            padding: 8px;
-            margin-top: 3px;
+            padding: 12px;
+            margin-top: 6px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             background: var(--bg);
-            box-shadow: inset 2px 2px 4px var(--shadow-dark), 
-                        inset -2px -2px 4px var(--shadow-light);
-            font-size: 14px;
+            box-shadow: inset 3px 3px 6px var(--shadow-dark), 
+                        inset -3px -3px 6px var(--shadow-light);
+            font-size: 16px;
             font-weight: bold;
             color: var(--text);
             box-sizing: border-box;
@@ -74,27 +73,29 @@
         .time-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 4px;
+            gap: 10px;
+            margin-top: 6px;
         }
 
+        /* Botones grandes a ancho completo */
         .btn-3d {
             width: 100%;
-            padding: 10px;
-            margin-top: 6px;
+            padding: 15px;
+            margin-top: 10px;
             border: none;
-            border-radius: 10px;
-            font-size: 13px;
+            border-radius: 12px;
+            font-size: 15px;
             font-weight: bold;
             color: white;
             background: var(--primary);
-            box-shadow: 3px 3px 6px var(--shadow-dark), 
-                        -3px -3px 6px var(--shadow-light);
+            box-shadow: 4px 4px 8px var(--shadow-dark), 
+                        -4px -4px 8px var(--shadow-light);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
+            box-sizing: border-box;
         }
 
         .btn-3d:active {
@@ -105,34 +106,30 @@
         .btn-pdf { background: #2e7d32; }
         .btn-ws  { background: #25d366; }
 
-        .app-content {
-            flex: 1;
-            overflow-y: auto;
-        }
-
         .task-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #cbd5e0;
-            font-size: 12px;
+            font-size: 14px;
         }
 
         .total-box {
             text-align: center;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
             color: var(--primary);
-            margin-top: 6px;
+            margin-top: 10px;
         }
 
-        /* Barra de acciones siempre visible al final */
+        /* Panel de acciones final a doble columna */
         .actions-footer {
-            margin-top: 8px;
+            margin-top: 15px;
+            margin-bottom: 20px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 10px;
         }
     </style>
 </head>
@@ -140,50 +137,48 @@
 
     <h1>📋 Control de Tareas</h1>
 
-    <div class="app-content">
-        <!-- Fecha -->
-        <div class="card-3d">
-            <label for="fecha">Fecha de Registro</label>
-            <input type="date" id="fecha">
-        </div>
+    <!-- 1. Fecha -->
+    <div class="card-3d">
+        <label for="fecha">Fecha de Registro</label>
+        <input type="date" id="fecha">
+    </div>
 
-        <!-- Horario previo a dictar -->
-        <div class="card-3d">
-            <label>Horario de la Tarea</label>
-            <div class="time-container">
-                <div>
-                    <label style="font-size: 8px;">Inicio</label>
-                    <input type="time" id="h-inicio" value="08:00">
-                </div>
-                <div>
-                    <label style="font-size: 8px;">Fin</label>
-                    <input type="time" id="h-fin" value="09:00">
-                </div>
+    <!-- 2. Horario -->
+    <div class="card-3d">
+        <label>Horario de la Tarea</label>
+        <div class="time-container">
+            <div>
+                <label style="font-size: 10px;">Inicio</label>
+                <input type="time" id="h-inicio" value="08:00">
             </div>
-        </div>
-
-        <!-- Entrada de Texto y Grabación Directa -->
-        <div class="card-3d">
-            <label for="tarea">Descripción de la Tarea</label>
-            <input type="text" id="tarea" placeholder="Escribe o dicta la tarea...">
-            
-            <button type="button" class="btn-3d btn-mic" onclick="dictarYGrabar()">
-                🎤 Dictar y Grabar Tarea
-            </button>
-            <button type="button" class="btn-3d" onclick="agregarTareaManual()">
-                ➕ Añadir Tarea Manual
-            </button>
-        </div>
-
-        <!-- Lista de tareas -->
-        <div class="card-3d">
-            <label>Tareas Registradas</label>
-            <div id="lista-tareas"></div>
-            <div class="total-box" id="sumatorio-total">Total: 0h 0m</div>
+            <div>
+                <label style="font-size: 10px;">Fin</label>
+                <input type="time" id="h-fin" value="09:00">
+            </div>
         </div>
     </div>
 
-    <!-- BOTONES VISIBLES SIEMPRE EN PANTALLA -->
+    <!-- 3. Entrada de Texto y Grabación -->
+    <div class="card-3d">
+        <label for="tarea">Descripción de la Tarea</label>
+        <input type="text" id="tarea" placeholder="Escribe o dicta la tarea...">
+        
+        <button type="button" class="btn-3d btn-mic" onclick="dictarYGrabar()">
+            🎤 Dictar y Grabar Tarea
+        </button>
+        <button type="button" class="btn-3d" onclick="agregarTareaManual()">
+            ➕ Añadir Tarea Manual
+        </button>
+    </div>
+
+    <!-- 4. Tareas Registradas -->
+    <div class="card-3d">
+        <label>Tareas Registradas</label>
+        <div id="lista-tareas"></div>
+        <div class="total-box" id="sumatorio-total">Total: 0h 0m</div>
+    </div>
+
+    <!-- 5. Acciones Principales (PDF y WhatsApp) -->
     <div class="actions-footer">
         <button type="button" class="btn-3d btn-pdf" onclick="generarPDF()">
             📄 Generar PDF
@@ -201,7 +196,7 @@
             document.getElementById('fecha').value = hoy;
         };
 
-        // Dicta por voz e inserta automáticamente la tarea registrada
+        // Dictado por voz con auto-guardado
         function dictarYGrabar() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
                 alert("El navegador no soporta el reconocimiento de voz.");
@@ -228,7 +223,7 @@
             procesarYGuardarTarea(desc.toUpperCase());
         }
 
-        // Procesa el tiempo (incluso de madrugada o día siguiente) y añade la tarea
+        // Procesa horas (incluyendo turnos nocturnos)
         function procesarYGuardarTarea(descripcion) {
             const hIni = document.getElementById('h-inicio').value;
             const hFin = document.getElementById('h-fin').value;
@@ -238,9 +233,8 @@
             let minInicio = h1 * 60 + m1;
             let minFin = h2 * 60 + m2;
 
-            // Soporte para tareas que sobrepasan la medianoche
             if (minFin <= minInicio) {
-                minFin += 1440; // Suma 24 horas en minutos
+                minFin += 1440; // Suma 24 horas si sobrepasa la medianoche
             }
 
             const duracionMin = minFin - minInicio;
@@ -273,7 +267,7 @@
                             <strong>${t.descripcion}</strong><br>
                             <small style="color:#718096;">${t.inicio} - ${t.fin}</small>
                         </div>
-                        <div style="text-align: right; min-width: 65px;">
+                        <div style="text-align: right; min-width: 70px;">
                             <span style="font-weight:bold; color:var(--primary);">${tiempoTexto}</span>
                             <button onclick="eliminarTarea(${index})" style="border:none; background:none; color:red; margin-left:4px; cursor:pointer;">❌</button>
                         </div>
@@ -291,6 +285,7 @@
             actualizarLista();
         }
 
+        // Generación de PDF adaptativo sin cortar texto
         function generarPDF() {
             if (tareas.length === 0) {
                 alert("No hay tareas registradas para generar el informe.");
@@ -323,6 +318,7 @@
                 const mins = t.minutos % 60;
                 const durStr = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
 
+                // Divide el texto largo en líneas múltiples para que no se corte
                 const lineasTexto = doc.splitTextToSize(t.descripcion, 100);
                 
                 doc.text(lineasTexto, 20, y);
