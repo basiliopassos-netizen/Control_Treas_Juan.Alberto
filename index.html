@@ -69,7 +69,7 @@
             text-align: center;
         }
 
-        /* Campo de texto con botón de micrófono integrado */
+        /* Campo de texto con micrófono */
         .input-mic-container {
             display: flex;
             gap: 8px;
@@ -103,6 +103,39 @@
             box-shadow: inset 2px 2px 4px rgba(0,0,0,0.4);
         }
 
+        /* Contenedor de Captura de Foto */
+        .photo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-camera {
+            background: #0288d1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 3px 3px 6px var(--shadow-dark), 
+                        -3px -3px 6px var(--shadow-light);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preview-img {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid var(--primary);
+            display: none;
+        }
+
         .time-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -110,7 +143,6 @@
             margin-top: 6px;
         }
 
-        /* Botones de acción principal */
         .btn-3d {
             width: 100%;
             padding: 15px;
@@ -147,6 +179,14 @@
             font-size: 14px;
         }
 
+        .task-img-thumb {
+            width: 35px;
+            height: 35px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-right: 8px;
+        }
+
         .total-box {
             text-align: center;
             font-size: 16px;
@@ -166,7 +206,7 @@
 </head>
 <body>
 
-    <!-- TITULO ACTUALIZADO -->
+    <!-- TÍTULO PRINCIPAL -->
     <h1>📋 Control de Tareas J.A.</h1>
 
     <!-- 1. Fecha de Registro -->
@@ -175,7 +215,7 @@
         <input type="date" id="fecha">
     </div>
 
-    <!-- 2. Descripción con Micrófono Integrado -->
+    <!-- 2. Descripción de Tarea + Micrófono + Foto -->
     <div class="card-3d">
         <label for="tarea">Descripción de la Tarea</label>
         <div class="input-mic-container">
@@ -183,6 +223,15 @@
             <button type="button" class="btn-mic-small" onclick="dictarTexto()" title="Dictar por voz">
                 🎤
             </button>
+        </div>
+
+        <!-- Botón para adjuntar foto -->
+        <div class="photo-container">
+            <input type="file" id="input-foto" accept="image/*" capture="environment" style="display: none;" onchange="procesarFoto(event)">
+            <button type="button" class="btn-camera" onclick="document.getElementById('input-foto').click()">
+                📷 Adjuntar Foto
+            </button>
+            <img id="preview-foto" class="preview-img" alt="Vista previa">
         </div>
     </div>
 
@@ -224,11 +273,19 @@
 
     <script>
         let tareas = [];
+        let fotoActualBase64 = "";
 
         window.onload = () => {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fecha').value = hoy;
         };
+
+        // Formateador de fecha al estándar europeo DD/MM/AAAA
+        function obtenerFechaEuropea(fechaISO) {
+            if (!fechaISO) return "";
+            const partes = fechaISO.split('-');
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
 
         function dictarTexto() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -244,6 +301,21 @@
                 const texto = event.results[0][0].transcript;
                 document.getElementById('tarea').value = texto.toUpperCase();
             };
+        }
+
+        // Convierte la imagen capturada a formato Base64
+        function procesarFoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoActualBase64 = e.target.result;
+                    const imgPreview = document.getElementById('preview-foto');
+                    imgPreview.src = fotoActualBase64;
+                    imgPreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
         }
 
         function grabarTarea() {
@@ -262,7 +334,7 @@
             let minFin = h2 * 60 + m2;
 
             if (minFin <= minInicio) {
-                minFin += 1440; // Soporte para horarios nocturnos que cruzan la medianoche
+                minFin += 1440; // Ajuste para turnos que pasan de medianoche
             }
 
             const duracionMin = minFin - minInicio;
@@ -271,10 +343,16 @@
                 descripcion: desc.toUpperCase(),
                 inicio: hIni,
                 fin: hFin,
-                minutos: duracionMin
+                minutos: duracionMin,
+                foto: fotoActualBase64
             });
 
+            // Limpieza de campos
             document.getElementById('tarea').value = '';
+            document.getElementById('input-foto').value = '';
+            document.getElementById('preview-foto').style.display = 'none';
+            fotoActualBase64 = "";
+
             actualizarLista();
         }
 
@@ -289,11 +367,18 @@
                 const mins = t.minutos % 60;
                 const tiempoTexto = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
 
+                const miniaturaHTML = t.foto 
+                    ? `<img src="${t.foto}" class="task-img-thumb" alt="Foto">` 
+                    : '';
+
                 contenedor.innerHTML += `
                     <div class="task-item">
-                        <div style="flex: 1; padding-right: 5px;">
-                            <strong>${t.descripcion}</strong><br>
-                            <small style="color:#718096;">${t.inicio} - ${t.fin}</small>
+                        <div style="display: flex; align-items: center; flex: 1; padding-right: 5px;">
+                            ${miniaturaHTML}
+                            <div>
+                                <strong>${t.descripcion}</strong><br>
+                                <small style="color:#718096;">${t.inicio} - ${t.fin}</small>
+                            </div>
                         </div>
                         <div style="text-align: right; min-width: 70px;">
                             <span style="font-weight:bold; color:var(--primary);">${tiempoTexto}</span>
@@ -313,6 +398,7 @@
             actualizarLista();
         }
 
+        // Generación de PDF con cabecera corporativa y fotos
         function generarPDF() {
             if (tareas.length === 0) {
                 alert("No hay tareas registradas para generar el informe.");
@@ -321,19 +407,33 @@
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const fecha = document.getElementById('fecha').value;
+            const fechaISO = document.getElementById('fecha').value;
+            const fechaEuropea = obtenerFechaEuropea(fechaISO);
 
-            doc.setFontSize(16);
-            doc.text("INFORME DE REGISTRO DE TAREAS - J.A.", 20, 20);
-            doc.setFontSize(11);
-            doc.text(`Fecha de Registro: ${fecha}`, 20, 28);
+            // --- CABECERA ESTILIZADA (BANNER AZUL) ---
+            doc.setFillColor(13, 71, 161); // Azul oscuro
+            doc.rect(0, 0, 210, 38, 'F');
 
-            let y = 40;
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(18);
             doc.setFont(undefined, 'bold');
-            doc.text("Descripción de Tarea", 20, y);
-            doc.text("Horario", 130, y);
-            doc.text("Duración", 165, y);
-            doc.line(20, y + 2, 190, y + 2);
+            doc.text("INFORME DE CONTROL DE TAREAS", 15, 18);
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Operador / Registro: Juan Alberto (J.A.)`, 15, 27);
+            doc.text(`Fecha: ${fechaEuropea}`, 150, 27);
+
+            // --- TABLA DE TAREAS ---
+            let y = 50;
+            doc.setTextColor(45, 55, 72);
+            doc.setFont(undefined, 'bold');
+            doc.text("Descripción de Tarea", 15, y);
+            doc.text("Horario", 115, y);
+            doc.text("Duración", 145, y);
+            doc.text("Foto", 175, y);
+            doc.setDrawColor(200, 200, 200);
+            doc.line(15, y + 2, 195, y + 2);
 
             y += 10;
             doc.setFont(undefined, 'normal');
@@ -345,25 +445,39 @@
                 const mins = t.minutos % 60;
                 const durStr = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
 
-                // Divide el texto en varias líneas para evitar que se corte
-                const lineasTexto = doc.splitTextToSize(t.descripcion, 100);
-                
-                doc.text(lineasTexto, 20, y);
-                doc.text(`${t.inicio} - ${t.fin}`, 130, y);
-                doc.text(durStr, 165, y);
+                // División de texto para evitar que se corte
+                const lineasTexto = doc.splitTextToSize(t.descripcion, 95);
+                doc.text(lineasTexto, 15, y);
+                doc.text(`${t.inicio} - ${t.fin}`, 115, y);
+                doc.text(durStr, 145, y);
 
-                y += (lineasTexto.length * 6) + 4;
+                // Insertar foto en el PDF si existe
+                if (t.foto) {
+                    try {
+                        doc.addImage(t.foto, 'JPEG', 175, y - 4, 18, 18);
+                    } catch (e) {
+                        doc.text("Ver foto", 175, y);
+                    }
+                } else {
+                    doc.text("-", 180, y);
+                }
+
+                // Cálculo de altura según líneas o presencia de imagen
+                const altoTexto = lineasTexto.length * 6;
+                const altoFila = t.foto ? Math.max(altoTexto, 20) : altoTexto + 4;
+                y += altoFila;
             });
 
+            // --- SUMATORIO TOTAL ---
             const totalHrs = Math.floor(totalMinutos / 60);
             const totalMins = totalMinutos % 60;
-            doc.line(20, y + 2, 190, y + 2);
+            doc.line(15, y + 2, 195, y + 2);
             y += 10;
             doc.setFont(undefined, 'bold');
-            doc.setFontSize(13);
-            doc.text(`SUMATORIO TOTAL: ${totalHrs}h ${totalMins}m`, 20, y);
+            doc.setFontSize(12);
+            doc.text(`SUMATORIO TOTAL DEDICADO: ${totalHrs}h ${totalMins}m`, 15, y);
 
-            doc.save(`Registro_Tareas_${fecha}.pdf`);
+            doc.save(`Registro_Tareas_${fechaEuropea.replace(/\//g, '-')}.pdf`);
         }
 
         function enviarWhatsApp() {
@@ -374,16 +488,17 @@
 
             generarPDF();
 
-            const fecha = document.getElementById('fecha').value;
+            const fechaEuropea = obtenerFechaEuropea(document.getElementById('fecha').value);
             let totalMinutos = 0;
-            let texto = `*INFORME DE TAREAS Y HORARIOS - J.A. (${fecha})*\n\n`;
+            let texto = `*INFORME DE TAREAS Y HORARIOS - J.A. (${fechaEuropea})*\n\n`;
 
             tareas.forEach(t => {
                 totalMinutos += t.minutos;
                 const hrs = Math.floor(t.minutos / 60);
                 const mins = t.minutos % 60;
                 const durStr = `${hrs > 0 ? hrs + 'h ' : ''}${mins}m`;
-                texto += `📌 *${t.descripcion}*\n   🕒 Horario: ${t.inicio} a ${t.fin} (${durStr})\n\n`;
+                const tieneFoto = t.foto ? " 📷 (Foto adjunta)" : "";
+                texto += `📌 *${t.descripcion}*${tieneFoto}\n   🕒 Horario: ${t.inicio} a ${t.fin} (${durStr})\n\n`;
             });
 
             const totalHrs = Math.floor(totalMinutos / 60);
