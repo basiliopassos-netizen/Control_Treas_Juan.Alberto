@@ -3,81 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control — J.A.</title>
-    <!-- Librería para la generación de PDF -->
+    <title>Tareas — J.A.</title>
+    <!-- Librería para generación de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
-            --bg-main: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #38bdf8;
-            --text-main: #f8fafc;
-            --text-sub: #94a3b8;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --border: #334155;
+            --bg-main: #f5f5f7;
+            --card-bg: #ffffff;
+            --accent: #0071e3;
+            --accent-light: #e8f2ff;
+            --text-main: #1d1d1f;
+            --text-sub: #86868b;
+            --danger: #ff3b30;
+            --success: #34c759;
+            --border: #e5e5ea;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-main);
             color: var(--text-main);
-            padding: 16px;
-            padding-bottom: 40px;
+            padding: 20px 16px;
+            padding-bottom: 60px;
         }
 
-        /* Cabecera Principal */
+        /* Cabecera Estilo iOS */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            padding: 0 4px;
         }
 
         header h1 {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 700;
+            letter-spacing: -0.5px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         .badge {
-            background: var(--accent);
-            color: #0f172a;
+            background: var(--accent-light);
+            color: var(--accent);
             font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
         }
 
         .btn-menu {
             background: var(--card-bg);
             border: 1px solid var(--border);
             color: var(--text-main);
-            font-size: 1.3rem;
-            padding: 8px 12px;
-            border-radius: 10px;
+            font-size: 1.2rem;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
         }
 
-        /* Menú Lateral Desplegable (Drawer) */
+        .btn-menu:active {
+            transform: scale(0.95);
+            background: #e5e5ea;
+        }
+
+        /* Menú Desplegable Corregido con Scroll */
         .drawer-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
@@ -92,17 +106,21 @@
         .drawer {
             position: fixed;
             top: 0;
-            right: -280px;
-            width: 280px;
+            right: -300px;
+            width: 290px;
             height: 100vh;
-            background: var(--card-bg);
-            padding: 24px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 24px 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            transition: right 0.3s ease;
+            gap: 14px;
+            transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100;
             border-left: 1px solid var(--border);
+            overflow-y: auto; /* Permite scroll si la pantalla es corta */
+            box-shadow: -10px 0 30px rgba(0,0,0,0.05);
         }
 
         .drawer.open {
@@ -110,92 +128,95 @@
         }
 
         .drawer h3 {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-sub);
-            margin-bottom: 8px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
+            margin-bottom: 6px;
         }
 
-        /* Layout de tarjetas */
+        /* Tarjetas Estilo Apple */
         .card {
             background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 20px;
+            padding: 20px;
             margin-bottom: 16px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
 
         .form-vertical {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
+        }
+
+        .field-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: block;
         }
 
         .input-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            background: #0f172a;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 4px 12px;
+            gap: 12px;
+            background: #f2f2f7;
+            border-radius: 12px;
+            padding: 12px 14px;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .input-row:focus-within {
+            background: #ffffff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
         }
 
         .input-icon {
             font-size: 1.1rem;
-            opacity: 0.8;
-            min-width: 24px;
-            text-align: center;
+            opacity: 0.7;
         }
 
         input {
             width: 100%;
-            padding: 12px 0;
             border: none;
             background: transparent;
             color: var(--text-main);
             font-size: 0.95rem;
-            color-scheme: dark;
             outline: none;
+            font-family: inherit;
         }
 
         .btn-mic {
             background: none;
             border: none;
-            color: var(--accent);
             font-size: 1.2rem;
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 2px;
+            transition: transform 0.2s;
         }
 
         .btn-mic.listening {
-            color: #f59e0b;
             animation: pulse 1.2s infinite;
         }
 
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+            50% { transform: scale(1.2); }
             100% { transform: scale(1); }
         }
 
-        /* Grupo de horas en paralelo con iconos */
-        .time-split {
-            display: flex;
-            gap: 8px;
-        }
-
-        .time-split .input-row {
-            flex: 1;
-        }
-
-        /* Botones verticales */
+        /* Botones Pulidos iOS */
         .btn-v {
             width: 100%;
-            padding: 14px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 14px;
             border: none;
             font-weight: 600;
             font-size: 0.95rem;
@@ -204,24 +225,26 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: transform 0.1s, opacity 0.2s;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
 
         .btn-v:active {
             transform: scale(0.98);
+            opacity: 0.9;
         }
 
-        .btn-primary { background: var(--accent); color: #0f172a; }
-        .btn-whatsapp { background: var(--success); color: #fff; }
-        .btn-pdf { background: #e11d48; color: #fff; }
-        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-primary { background: var(--accent); color: #ffffff; }
+        .btn-whatsapp { background: var(--success); color: #ffffff; }
+        .btn-pdf { background: #5856d6; color: #ffffff; }
+        .btn-danger { background: rgba(255, 59, 48, 0.1); color: var(--danger); border: 1px solid rgba(255, 59, 48, 0.2); }
 
         /* Lista de Tareas */
         .task-card {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 1px solid var(--border);
         }
 
@@ -238,6 +261,7 @@
         .task-title {
             font-size: 0.95rem;
             font-weight: 600;
+            color: var(--text-main);
         }
 
         .task-sub {
@@ -251,26 +275,30 @@
         .btn-del {
             background: none;
             border: none;
-            color: var(--danger);
+            color: #c7c7cc;
             font-size: 1.1rem;
             cursor: pointer;
             padding: 6px;
+            transition: color 0.2s;
+        }
+
+        .btn-del:hover {
+            color: var(--danger);
         }
 
         .total-box {
-            margin-top: 14px;
-            padding-top: 12px;
-            border-top: 1px dashed var(--border);
-            text-align: right;
-            font-weight: 700;
-            color: var(--accent);
-            font-size: 0.9rem;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.95rem;
         }
 
-        /* Plantilla oculta para el PDF */
+        /* Plantilla Oculta para PDF */
         #pdf-template {
             display: none;
             font-family: Arial, sans-serif;
@@ -280,7 +308,7 @@
         }
 
         #pdf-template .header {
-            border-bottom: 2px solid #0284c7;
+            border-bottom: 2px solid #0071e3;
             padding-bottom: 12px;
             margin-bottom: 20px;
             display: flex;
@@ -294,81 +322,100 @@
         }
 
         #pdf-template th, #pdf-template td {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 8px;
+            border-bottom: 1px solid #e5e5ea;
+            padding: 10px 8px;
             text-align: left;
             font-size: 12px;
         }
 
-        #pdf-template th { background: #f1f5f9; }
+        #pdf-template th { background: #f2f2f7; }
     </style>
 </head>
 <body>
 
-    <!-- Cabecera de la App -->
+    <!-- Cabecera -->
     <header>
         <h1>📋 Tareas <span class="badge">J.A.</span></h1>
         <button class="btn-menu" onclick="toggleDrawer()">☰</button>
     </header>
 
-    <!-- Menú Desplegable Lateral (Drawer) -->
+    <!-- Menú Desplegable Lateral con Scroll Accesible -->
     <div class="drawer-overlay" id="overlay" onclick="toggleDrawer()"></div>
     <div class="drawer" id="drawer">
-        <h3>Informes y Acciones</h3>
-        <button class="btn-v btn-whatsapp" onclick="sendWhatsApp(); toggleDrawer();">📲 WhatsApp</button>
-        <button class="btn-v btn-pdf" onclick="generatePDF(); toggleDrawer();">📄 Exportar PDF</button>
-        <div style="flex-grow: 1;"></div>
-        <button class="btn-v btn-danger" onclick="resetTasks(); toggleDrawer();">🗑️ Borrar Todo</button>
+        <div>
+            <h3>Opciones e Informes</h3>
+            <p style="font-size: 0.8rem; color: var(--text-sub); margin-bottom: 16px;">Generación de reportes y gestión</p>
+        </div>
+        
+        <button class="btn-v btn-whatsapp" onclick="sendWhatsApp(); toggleDrawer();">📲 Compartir por WhatsApp</button>
+        <button class="btn-v btn-pdf" onclick="generatePDF(); toggleDrawer();">📄 Exportar en PDF</button>
+        
+        <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px;">
+            <button class="btn-v btn-danger" onclick="resetTasks(); toggleDrawer();">🗑️ Borrar Todo</button>
+        </div>
     </div>
 
-    <!-- Formulario Entrada con Iconos -->
+    <!-- Formulario Vertical Estricto con Iconografía -->
     <div class="card">
         <form class="form-vertical" onsubmit="event.preventDefault(); addTask();">
             
             <!-- Fecha -->
-            <div class="input-row">
-                <span class="input-icon">📅</span>
-                <input type="date" id="taskDate">
+            <div>
+                <span class="field-label">Fecha</span>
+                <div class="input-row">
+                    <span class="input-icon">📅</span>
+                    <input type="date" id="taskDate">
+                </div>
             </div>
 
             <!-- Tarea + Micrófono -->
-            <div class="input-row">
-                <span class="input-icon">📝</span>
-                <input type="text" id="taskName" placeholder="Descripción de la tarea...">
-                <button type="button" class="btn-mic" id="micBtn" onclick="startVoiceRecognition()" title="Dictar por voz">🎤</button>
+            <div>
+                <span class="field-label">Acción o Tarea</span>
+                <div class="input-row">
+                    <span class="input-icon">📝</span>
+                    <input type="text" id="taskName" placeholder="Descripción de la tarea...">
+                    <button type="button" class="btn-mic" id="micBtn" onclick="startVoiceRecognition()" title="Dictar por voz">🎤</button>
+                </div>
             </div>
 
-            <!-- Horas Desde / Hasta -->
-            <div class="time-split">
-                <div class="input-row" title="Hora Inicio">
+            <!-- Hora Desde -->
+            <div>
+                <span class="field-label">Hora Inicio (Desde)</span>
+                <div class="input-row">
                     <span class="input-icon">⏱️</span>
                     <input type="time" id="startTime">
                 </div>
-                <div class="input-row" title="Hora Fin">
+            </div>
+
+            <!-- Hora Hasta -->
+            <div>
+                <span class="field-label">Hora Fin (Hasta)</span>
+                <div class="input-row">
                     <span class="input-icon">🏁</span>
                     <input type="time" id="endTime">
                 </div>
             </div>
 
-            <button type="submit" class="btn-v btn-primary">➕ Guardar Registro</button>
+            <button type="submit" class="btn-v btn-primary" style="margin-top: 6px;">➕ Guardar Registro</button>
         </form>
     </div>
 
-    <!-- Lista de Tareas -->
+    <!-- Historial de Tareas -->
     <div class="card">
+        <span class="field-label" style="margin-bottom: 10px;">Historial de Tareas</span>
         <div id="taskList"></div>
         <div class="total-box">
-            <span>⏱️ Total:</span>
+            <span>⏱️ Tiempo Total:</span>
             <span id="totalTime">0 min</span>
         </div>
     </div>
 
-    <!-- Plantilla PDF Oculta -->
+    <!-- Contenedor Oculto PDF -->
     <div id="pdf-template">
         <div class="header">
             <div>
-                <h2 style="color: #0284c7; margin:0;">INFORME DE TAREAS Y HORARIOS</h2>
-                <div style="font-size: 12px; color: #64748b;">Responsable: J.A.</div>
+                <h2 style="color: #0071e3; margin:0;">INFORME DE CONTROL DE TAREAS</h2>
+                <div style="font-size: 12px; color: #86868b; margin-top: 4px;">Responsable: J.A.</div>
             </div>
             <div style="text-align: right; font-size: 12px;" id="pdf-date"></div>
         </div>
@@ -383,7 +430,7 @@
             </thead>
             <tbody id="pdf-table-body"></tbody>
         </table>
-        <div style="margin-top: 20px; text-align: right; font-weight: bold; font-size: 13px; color: #0284c7;" id="pdf-total-time"></div>
+        <div style="margin-top: 20px; text-align: right; font-weight: bold; font-size: 13px; color: #0071e3;" id="pdf-total-time"></div>
     </div>
 
     <script>
@@ -411,7 +458,7 @@
             let total = 0;
 
             if (tasks.length === 0) {
-                listEl.innerHTML = '<p style="text-align:center; color: var(--text-sub); font-size: 0.85rem; padding: 8px 0;">Sin registros aún.</p>';
+                listEl.innerHTML = '<p style="text-align:center; color: var(--text-sub); font-size: 0.85rem; padding: 12px 0;">No hay tareas registradas.</p>';
             }
 
             tasks.sort((a, b) => new Date(a.date + 'T' + a.start) - new Date(b.date + 'T' + b.start));
@@ -447,7 +494,7 @@
             const end = document.getElementById('endTime').value;
 
             if (!date || !name || !start || !end) {
-                alert('Por favor rellena fecha, tarea y horarios.');
+                alert('Por favor completa todos los campos.');
                 return;
             }
 
@@ -465,7 +512,7 @@
 
         function resetTasks() {
             if (tasks.length === 0) return;
-            if (confirm('⚠️ ¿Borrar todas las tareas registradas?')) {
+            if (confirm('⚠️ ¿Deseas borrar definitivamente todo el registro de tareas?')) {
                 tasks = [];
                 renderTasks();
             }
