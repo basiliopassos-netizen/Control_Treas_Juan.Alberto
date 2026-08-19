@@ -298,7 +298,7 @@
         .btn-pdf { background: #5856d6; color: #ffffff; }
         .btn-danger { background: rgba(255, 59, 48, 0.1); color: var(--danger); border: 1px solid rgba(255, 59, 48, 0.2); }
 
-        /* Modal Selector de Rueda (Wheel Picker) */
+        /* Modal Selector de Rueda (Elevado y Centrado para Moles) */
         .picker-modal-overlay {
             position: fixed;
             top: 0;
@@ -325,12 +325,15 @@
             background: #ffffff;
             width: 100%;
             max-width: 400px;
-            border-top-left-radius: 20px;
-            border-top-right-radius: 20px;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
             padding: 20px;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+            padding-bottom: 40px; /* Margen de seguridad para elevar los botones */
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
             transform: translateY(100%);
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 85vh;
+            overflow-y: auto;
         }
 
         .picker-modal-overlay.open .picker-modal {
@@ -341,7 +344,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .picker-title {
@@ -354,7 +357,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 180px;
+            height: 150px;
             position: relative;
             overflow: hidden;
             background: #f2f2f7;
@@ -367,9 +370,9 @@
             top: 50%;
             left: 10px;
             right: 10px;
-            height: 40px;
+            height: 38px;
             transform: translateY(-50%);
-            background: rgba(0, 113, 227, 0.1);
+            background: rgba(0, 113, 227, 0.12);
             border-radius: 8px;
             pointer-events: none;
             border: 1px solid rgba(0, 113, 227, 0.3);
@@ -388,11 +391,11 @@
         }
 
         .wheel-spacer {
-            height: 70px;
+            height: 56px;
         }
 
         .wheel-item {
-            height: 40px;
+            height: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -403,7 +406,7 @@
         }
 
         .wheel-separator {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--text-main);
             margin: 0 8px;
@@ -613,7 +616,7 @@
         </div>
     </div>
 
-    <!-- Modal de Rueda Deslizante para Seleccionar Hora -->
+    <!-- Modal de Rueda Deslizante Elevado -->
     <div class="picker-modal-overlay" id="pickerOverlay" onclick="closeTimePicker()">
         <div class="picker-modal" onclick="event.stopPropagation()">
             <div class="picker-header">
@@ -671,7 +674,7 @@
 
         document.getElementById('taskDate').valueAsDate = new Date();
 
-        // Inicializar Rueda Deslizante de Horas y Minutos
+        // Inicializar Rueda Deslizante
         function initWheelPicker() {
             const hWheel = document.getElementById('hoursWheel');
             const mWheel = document.getElementById('minutesWheel');
@@ -685,7 +688,7 @@
             hWheel.innerHTML = hHtml;
 
             let mHtml = '<div class="wheel-spacer"></div>';
-            for(let i=0; i<60; i+=5) { // Pasos de 5 min para mayor velocidad
+            for(let i=0; i<60; i+=5) {
                 const str = String(i).padStart(2, '0');
                 mHtml += `<div class="wheel-item" data-val="${str}">${str}</div>`;
             }
@@ -698,7 +701,6 @@
             document.getElementById('pickerTitle').innerText = inputId === 'startTime' ? 'Hora Inicio (Desde)' : 'Hora Fin (Hasta)';
             document.getElementById('pickerOverlay').classList.add('open');
             
-            // Centrar valores actuales o defecto
             const val = document.getElementById(inputId).value || '08:00';
             const [h, m] = val.split(':');
             
@@ -707,8 +709,8 @@
                 const mWheel = document.getElementById('minutesWheel');
                 const hIdx = parseInt(h);
                 const mIdx = Math.round(parseInt(m)/5);
-                hWheel.scrollTop = hIdx * 40;
-                mWheel.scrollTop = mIdx * 40;
+                hWheel.scrollTop = hIdx * 38;
+                mWheel.scrollTop = mIdx * 38;
             }, 50);
         }
 
@@ -720,8 +722,8 @@
             const hWheel = document.getElementById('hoursWheel');
             const mWheel = document.getElementById('minutesWheel');
             
-            const hIdx = Math.round(hWheel.scrollTop / 40);
-            const mIdx = Math.round(mWheel.scrollTop / 40);
+            const hIdx = Math.round(hWheel.scrollTop / 38);
+            const mIdx = Math.round(mWheel.scrollTop / 38);
             
             const selectedH = String(Math.min(Math.max(hIdx, 0), 23)).padStart(2, '0');
             const selectedM = String(Math.min(Math.max(mIdx * 5, 0), 55)).padStart(2, '0');
