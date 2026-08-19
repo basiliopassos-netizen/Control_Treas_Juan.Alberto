@@ -193,13 +193,18 @@
             font-family: inherit;
         }
 
-        /* Estilo claro para pop-up nativo del reloj */
-        input[type="time"], input[type="date"] {
-            color-scheme: light;
-            min-height: 24px;
+        .fake-time-input {
+            width: 100%;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            cursor: pointer;
+            user-select: none;
         }
 
-        /* Botones de acción rápida */
+        .fake-time-input.placeholder {
+            color: #a1a1a6;
+        }
+
         .quick-btn {
             background: #e5e5ea;
             border: none;
@@ -217,7 +222,7 @@
             color: #ffffff;
         }
 
-        /* Chips Trabajo vs Desplazamiento */
+        /* Chips Trabajo / Desplazamiento */
         .type-selector {
             display: flex;
             gap: 8px;
@@ -292,6 +297,117 @@
         .btn-whatsapp { background: var(--success); color: #ffffff; }
         .btn-pdf { background: #5856d6; color: #ffffff; }
         .btn-danger { background: rgba(255, 59, 48, 0.1); color: var(--danger); border: 1px solid rgba(255, 59, 48, 0.2); }
+
+        /* Modal Selector de Rueda (Wheel Picker) */
+        .picker-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 200;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .picker-modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .picker-modal {
+            background: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.15);
+            transform: translateY(100%);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .picker-modal-overlay.open .picker-modal {
+            transform: translateY(0);
+        }
+
+        .picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .picker-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .wheel-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 180px;
+            position: relative;
+            overflow: hidden;
+            background: #f2f2f7;
+            border-radius: 14px;
+            margin-bottom: 16px;
+        }
+
+        .wheel-selection-bar {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            right: 10px;
+            height: 40px;
+            transform: translateY(-50%);
+            background: rgba(0, 113, 227, 0.1);
+            border-radius: 8px;
+            pointer-events: none;
+            border: 1px solid rgba(0, 113, 227, 0.3);
+        }
+
+        .wheel-column {
+            flex: 1;
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+        }
+
+        .wheel-column::-webkit-scrollbar {
+            display: none;
+        }
+
+        .wheel-spacer {
+            height: 70px;
+        }
+
+        .wheel-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            scroll-snap-align: center;
+        }
+
+        .wheel-separator {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 8px;
+        }
 
         /* Lista de Tareas */
         .task-card {
@@ -455,7 +571,8 @@
                 <span class="field-label">Hora Inicio (Desde)</span>
                 <div class="input-row">
                     <span class="input-icon">⏱️</span>
-                    <input type="time" id="startTime">
+                    <div class="fake-time-input placeholder" id="startTimeDisplay" onclick="openTimePicker('startTime')">--:--</div>
+                    <input type="hidden" id="startTime">
                     <button type="button" class="quick-btn" onclick="setNow('startTime')">Ahora</button>
                 </div>
             </div>
@@ -465,13 +582,14 @@
                 <span class="field-label">Hora Fin (Hasta)</span>
                 <div class="input-row">
                     <span class="input-icon">🏁</span>
-                    <input type="time" id="endTime">
+                    <div class="fake-time-input placeholder" id="endTimeDisplay" onclick="openTimePicker('endTime')">--:--</div>
+                    <input type="hidden" id="endTime">
                     <button type="button" class="quick-btn" onclick="addMinutesToStart(30)">+30m</button>
                     <button type="button" class="quick-btn" onclick="addMinutesToStart(60)">+1h</button>
                 </div>
             </div>
 
-            <!-- Notas (Opcional) -->
+            <!-- Notas -->
             <div>
                 <span class="field-label">Notas / Observaciones</span>
                 <div class="input-row">
@@ -492,6 +610,33 @@
         <div class="total-box">
             <span>⏱️ Tiempo Total:</span>
             <span id="totalTime">0 min</span>
+        </div>
+    </div>
+
+    <!-- Modal de Rueda Deslizante para Seleccionar Hora -->
+    <div class="picker-modal-overlay" id="pickerOverlay" onclick="closeTimePicker()">
+        <div class="picker-modal" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <span class="picker-title" id="pickerTitle">Seleccionar Hora</span>
+                <button type="button" class="quick-btn" onclick="closeTimePicker()">Cancelar</button>
+            </div>
+            
+            <div class="wheel-container">
+                <div class="wheel-selection-bar"></div>
+                <div class="wheel-column" id="hoursWheel">
+                    <div class="wheel-spacer"></div>
+                    <!-- Se llena con JS -->
+                    <div class="wheel-spacer"></div>
+                </div>
+                <div class="wheel-separator">:</div>
+                <div class="wheel-column" id="minutesWheel">
+                    <div class="wheel-spacer"></div>
+                    <!-- Se llena con JS -->
+                    <div class="wheel-spacer"></div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-v btn-primary" onclick="confirmTimePicker()">✓ Confirmar Hora</button>
         </div>
     </div>
 
@@ -522,14 +667,85 @@
     <script>
         let tasks = JSON.parse(localStorage.getItem('dailyTasksJA')) || [];
         let selectedCategory = 'work';
+        let activeTimeInputId = null;
 
         document.getElementById('taskDate').valueAsDate = new Date();
+
+        // Inicializar Rueda Deslizante de Horas y Minutos
+        function initWheelPicker() {
+            const hWheel = document.getElementById('hoursWheel');
+            const mWheel = document.getElementById('minutesWheel');
+            
+            let hHtml = '<div class="wheel-spacer"></div>';
+            for(let i=0; i<24; i++) {
+                const str = String(i).padStart(2, '0');
+                hHtml += `<div class="wheel-item" data-val="${str}">${str}</div>`;
+            }
+            hHtml += '<div class="wheel-spacer"></div>';
+            hWheel.innerHTML = hHtml;
+
+            let mHtml = '<div class="wheel-spacer"></div>';
+            for(let i=0; i<60; i+=5) { // Pasos de 5 min para mayor velocidad
+                const str = String(i).padStart(2, '0');
+                mHtml += `<div class="wheel-item" data-val="${str}">${str}</div>`;
+            }
+            mHtml += '<div class="wheel-spacer"></div>';
+            mWheel.innerHTML = mHtml;
+        }
+
+        function openTimePicker(inputId) {
+            activeTimeInputId = inputId;
+            document.getElementById('pickerTitle').innerText = inputId === 'startTime' ? 'Hora Inicio (Desde)' : 'Hora Fin (Hasta)';
+            document.getElementById('pickerOverlay').classList.add('open');
+            
+            // Centrar valores actuales o defecto
+            const val = document.getElementById(inputId).value || '08:00';
+            const [h, m] = val.split(':');
+            
+            setTimeout(() => {
+                const hWheel = document.getElementById('hoursWheel');
+                const mWheel = document.getElementById('minutesWheel');
+                const hIdx = parseInt(h);
+                const mIdx = Math.round(parseInt(m)/5);
+                hWheel.scrollTop = hIdx * 40;
+                mWheel.scrollTop = mIdx * 40;
+            }, 50);
+        }
+
+        function closeTimePicker() {
+            document.getElementById('pickerOverlay').classList.remove('open');
+        }
+
+        function confirmTimePicker() {
+            const hWheel = document.getElementById('hoursWheel');
+            const mWheel = document.getElementById('minutesWheel');
+            
+            const hIdx = Math.round(hWheel.scrollTop / 40);
+            const mIdx = Math.round(mWheel.scrollTop / 40);
+            
+            const selectedH = String(Math.min(Math.max(hIdx, 0), 23)).padStart(2, '0');
+            const selectedM = String(Math.min(Math.max(mIdx * 5, 0), 55)).padStart(2, '0');
+            
+            const timeStr = `${selectedH}:${selectedM}`;
+            
+            document.getElementById(activeTimeInputId).value = timeStr;
+            const displayEl = document.getElementById(activeTimeInputId + 'Display');
+            displayEl.innerText = timeStr;
+            displayEl.classList.remove('placeholder');
+            
+            closeTimePicker();
+        }
 
         function setNow(inputId) {
             const now = new Date();
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            document.getElementById(inputId).value = `${hours}:${minutes}`;
+            const val = `${hours}:${minutes}`;
+            
+            document.getElementById(inputId).value = val;
+            const displayEl = document.getElementById(inputId + 'Display');
+            displayEl.innerText = val;
+            displayEl.classList.remove('placeholder');
         }
 
         function addMinutesToStart(minsToAdd) {
@@ -544,7 +760,12 @@
             baseDate.setMinutes(baseDate.getMinutes() + minsToAdd);
             const hours = String(baseDate.getHours()).padStart(2, '0');
             const minutes = String(baseDate.getMinutes()).padStart(2, '0');
-            document.getElementById('endTime').value = `${hours}:${minutes}`;
+            const val = `${hours}:${minutes}`;
+
+            document.getElementById('endTime').value = val;
+            const displayEl = document.getElementById('endTimeDisplay');
+            displayEl.innerText = val;
+            displayEl.classList.remove('placeholder');
         }
 
         function selectCategory(cat) {
@@ -639,6 +860,10 @@
             document.getElementById('taskName').value = '';
             document.getElementById('startTime').value = '';
             document.getElementById('endTime').value = '';
+            document.getElementById('startTimeDisplay').innerText = '--:--';
+            document.getElementById('startTimeDisplay').classList.add('placeholder');
+            document.getElementById('endTimeDisplay').innerText = '--:--';
+            document.getElementById('endTimeDisplay').classList.add('placeholder');
             document.getElementById('taskNotes').value = '';
             selectCategory('work');
             renderTasks();
@@ -733,6 +958,7 @@
             recognition.start();
         }
 
+        initWheelPicker();
         renderTasks();
     </script>
 </body>
