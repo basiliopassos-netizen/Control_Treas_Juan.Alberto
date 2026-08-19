@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tareas — J.A.</title>
     <!-- Librería para generación de PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -82,7 +82,7 @@
             background: #e5e5ea;
         }
 
-        /* Menú Desplegable Corregido con Scroll */
+        /* Menú Desplegable Lateral */
         .drawer-overlay {
             position: fixed;
             top: 0;
@@ -167,7 +167,7 @@
             gap: 12px;
             background: #f2f2f7;
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 10px 14px;
             border: 1px solid transparent;
             transition: all 0.2s ease;
         }
@@ -193,7 +193,31 @@
             font-family: inherit;
         }
 
-        /* Chips para selección rápida de Categoría (Trabajo vs Desplazamiento) */
+        /* Estilo claro para pop-up nativo del reloj */
+        input[type="time"], input[type="date"] {
+            color-scheme: light;
+            min-height: 24px;
+        }
+
+        /* Botones de acción rápida */
+        .quick-btn {
+            background: #e5e5ea;
+            border: none;
+            color: var(--text-main);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .quick-btn:active {
+            background: var(--accent);
+            color: #ffffff;
+        }
+
+        /* Chips Trabajo vs Desplazamiento */
         .type-selector {
             display: flex;
             gap: 8px;
@@ -242,7 +266,7 @@
             100% { transform: scale(1); }
         }
 
-        /* Botones Pulidos iOS */
+        /* Botones iOS */
         .btn-v {
             width: 100%;
             padding: 15px;
@@ -273,7 +297,7 @@
         .task-card {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             padding: 14px 0;
             border-bottom: 1px solid var(--border);
         }
@@ -300,6 +324,18 @@
             display: flex;
             gap: 8px;
             align-items: center;
+        }
+
+        .task-note-text {
+            font-size: 0.82rem;
+            color: #48484a;
+            background: #f2f2f7;
+            padding: 6px 10px;
+            border-radius: 8px;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .btn-del {
@@ -369,7 +405,7 @@
         <button class="btn-menu" onclick="toggleDrawer()">☰</button>
     </header>
 
-    <!-- Menú Desplegable Lateral con Scroll Accesible -->
+    <!-- Menú Desplegable Lateral -->
     <div class="drawer-overlay" id="overlay" onclick="toggleDrawer()"></div>
     <div class="drawer" id="drawer">
         <div>
@@ -389,7 +425,7 @@
     <div class="card">
         <form class="form-vertical" onsubmit="event.preventDefault(); addTask();">
             
-            <!-- Selector de Tipo de Tarea (Trabajo / Desplazamiento) -->
+            <!-- Selector Trabajo / Desplazamiento -->
             <div class="type-selector">
                 <div class="chip active" id="chipWork" onclick="selectCategory('work')">🛠️ Trabajo</div>
                 <div class="chip" id="chipTravel" onclick="selectCategory('travel')">🚗 Desplazamiento</div>
@@ -409,8 +445,8 @@
                 <span class="field-label">Tarea</span>
                 <div class="input-row">
                     <span class="input-icon" id="taskCategoryIcon">🛠️</span>
-                    <input type="text" id="taskName" placeholder="Descripción o ruta...">
-                    <button type="button" class="btn-mic" id="micBtn" onclick="startVoiceRecognition()" title="Dictar por voz">🎤</button>
+                    <input type="text" id="taskName" placeholder="Descripción de la tarea...">
+                    <button type="button" class="btn-mic" id="micBtnTask" onclick="startVoiceRecognition('taskName', 'micBtnTask')" title="Dictar tarea">🎤</button>
                 </div>
             </div>
 
@@ -420,6 +456,7 @@
                 <div class="input-row">
                     <span class="input-icon">⏱️</span>
                     <input type="time" id="startTime">
+                    <button type="button" class="quick-btn" onclick="setNow('startTime')">Ahora</button>
                 </div>
             </div>
 
@@ -429,6 +466,18 @@
                 <div class="input-row">
                     <span class="input-icon">🏁</span>
                     <input type="time" id="endTime">
+                    <button type="button" class="quick-btn" onclick="addMinutesToStart(30)">+30m</button>
+                    <button type="button" class="quick-btn" onclick="addMinutesToStart(60)">+1h</button>
+                </div>
+            </div>
+
+            <!-- Notas (Opcional) -->
+            <div>
+                <span class="field-label">Notas / Observaciones</span>
+                <div class="input-row">
+                    <span class="input-icon">📌</span>
+                    <input type="text" id="taskNotes" placeholder="Añade notas o detalles...">
+                    <button type="button" class="btn-mic" id="micBtnNotes" onclick="startVoiceRecognition('taskNotes', 'micBtnNotes')" title="Dictar nota">🎤</button>
                 </div>
             </div>
 
@@ -462,6 +511,7 @@
                     <th>Tarea / Acción</th>
                     <th>Horario</th>
                     <th>Duración</th>
+                    <th>Notas</th>
                 </tr>
             </thead>
             <tbody id="pdf-table-body"></tbody>
@@ -471,9 +521,31 @@
 
     <script>
         let tasks = JSON.parse(localStorage.getItem('dailyTasksJA')) || [];
-        let selectedCategory = 'work'; // 'work' o 'travel'
+        let selectedCategory = 'work';
 
         document.getElementById('taskDate').valueAsDate = new Date();
+
+        function setNow(inputId) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById(inputId).value = `${hours}:${minutes}`;
+        }
+
+        function addMinutesToStart(minsToAdd) {
+            const startVal = document.getElementById('startTime').value;
+            let baseDate = new Date();
+            
+            if (startVal) {
+                const [h, m] = startVal.split(':').map(Number);
+                baseDate.setHours(h, m, 0);
+            }
+
+            baseDate.setMinutes(baseDate.getMinutes() + minsToAdd);
+            const hours = String(baseDate.getHours()).padStart(2, '0');
+            const minutes = String(baseDate.getMinutes()).padStart(2, '0');
+            document.getElementById('endTime').value = `${hours}:${minutes}`;
+        }
 
         function selectCategory(cat) {
             selectedCategory = cat;
@@ -525,6 +597,7 @@
                 total += dur;
                 const fDate = new Date(task.date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
                 const icon = task.category === 'travel' ? '🚗' : '🛠️';
+                const noteHtml = task.notes ? `<div class="task-note-text">📌 ${task.notes}</div>` : '';
 
                 listEl.innerHTML += `
                     <div class="task-card">
@@ -535,6 +608,7 @@
                                 <span>⏱️ ${task.start} - ${task.end}</span> 
                                 <strong>(${dur}m)</strong>
                             </span>
+                            ${noteHtml}
                         </div>
                         <button class="btn-del" onclick="deleteTask(${index})">🗑️</button>
                     </div>
@@ -550,21 +624,23 @@
             let name = document.getElementById('taskName').value.trim();
             const start = document.getElementById('startTime').value;
             const end = document.getElementById('endTime').value;
+            const notes = document.getElementById('taskNotes').value.trim();
 
             if (!name && selectedCategory === 'travel') {
                 name = 'Desplazamiento';
             }
 
             if (!date || !name || !start || !end) {
-                alert('Por favor completa todos los campos.');
+                alert('Por favor completa fecha, tarea y horarios.');
                 return;
             }
 
-            tasks.push({ date, name, start, end, category: selectedCategory });
+            tasks.push({ date, name, start, end, notes, category: selectedCategory });
             document.getElementById('taskName').value = '';
             document.getElementById('startTime').value = '';
             document.getElementById('endTime').value = '';
-            selectCategory('work'); // Resetear a trabajo por defecto
+            document.getElementById('taskNotes').value = '';
+            selectCategory('work');
             renderTasks();
         }
 
@@ -589,7 +665,8 @@
                 total += dur;
                 const fDate = new Date(t.date + 'T00:00:00').toLocaleDateString('es-ES');
                 const icon = t.category === 'travel' ? '🚗' : '🛠️';
-                r += `${i + 1}. [${fDate}] ${icon} ${t.name}\n   ⏰ ${t.start} - ${t.end} (*${dur} min*)\n`;
+                const noteText = t.notes ? `\n   📌 _Nota: ${t.notes}_` : '';
+                r += `${i + 1}. [${fDate}] ${icon} ${t.name}\n   ⏰ ${t.start} - ${t.end} (*${dur} min*)${noteText}\n`;
             });
             r += `-----------------------------------\n⏱️ *Tiempo Total:* ${total} min (${(total/60).toFixed(1)} h)`;
             return r;
@@ -611,12 +688,14 @@
                 const dur = calculateMinutes(t.start, t.end);
                 total += dur;
                 const icon = t.category === 'travel' ? '🚗 ' : '🛠️ ';
+                const noteCol = t.notes ? t.notes : '-';
                 tbody.innerHTML += `
                     <tr>
                         <td>${new Date(t.date + 'T00:00:00').toLocaleDateString('es-ES')}</td>
                         <td><strong>${icon}${t.name}</strong></td>
                         <td>${t.start} - ${t.end}</td>
                         <td>${dur} min</td>
+                        <td>${noteCol}</td>
                     </tr>
                 `;
             });
@@ -637,17 +716,17 @@
             });
         }
 
-        function startVoiceRecognition() {
+        function startVoiceRecognition(targetInputId, btnId) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) return alert('Navegador no compatible con dictado.');
 
             const recognition = new SpeechRecognition();
             recognition.lang = 'es-ES';
-            const micBtn = document.getElementById('micBtn');
+            const micBtn = document.getElementById(btnId);
 
             recognition.onstart = () => micBtn.classList.add('listening');
             recognition.onresult = (e) => {
-                document.getElementById('taskName').value = e.results[0][0].transcript;
+                document.getElementById(targetInputId).value = e.results[0][0].transcript;
                 micBtn.classList.remove('listening');
             };
             recognition.onerror = recognition.onend = () => micBtn.classList.remove('listening');
