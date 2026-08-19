@@ -119,7 +119,7 @@
             transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100;
             border-left: 1px solid var(--border);
-            overflow-y: auto; /* Permite scroll si la pantalla es corta */
+            overflow-y: auto;
             box-shadow: -10px 0 30px rgba(0,0,0,0.05);
         }
 
@@ -180,7 +180,7 @@
 
         .input-icon {
             font-size: 1.1rem;
-            opacity: 0.7;
+            opacity: 0.8;
         }
 
         input {
@@ -191,6 +191,36 @@
             font-size: 0.95rem;
             outline: none;
             font-family: inherit;
+        }
+
+        /* Chips para selección rápida de Categoría (Trabajo vs Desplazamiento) */
+        .type-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .chip {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #f2f2f7;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .chip.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            border-color: var(--accent);
         }
 
         .btn-mic {
@@ -355,10 +385,16 @@
         </div>
     </div>
 
-    <!-- Formulario Vertical Estricto con Iconografía -->
+    <!-- Formulario Vertical -->
     <div class="card">
         <form class="form-vertical" onsubmit="event.preventDefault(); addTask();">
             
+            <!-- Selector de Tipo de Tarea (Trabajo / Desplazamiento) -->
+            <div class="type-selector">
+                <div class="chip active" id="chipWork" onclick="selectCategory('work')">🛠️ Trabajo</div>
+                <div class="chip" id="chipTravel" onclick="selectCategory('travel')">🚗 Desplazamiento</div>
+            </div>
+
             <!-- Fecha -->
             <div>
                 <span class="field-label">Fecha</span>
@@ -368,12 +404,12 @@
                 </div>
             </div>
 
-            <!-- Tarea + Micrófono -->
+            <!-- Tarea -->
             <div>
-                <span class="field-label">Acción o Tarea</span>
+                <span class="field-label">Tarea</span>
                 <div class="input-row">
-                    <span class="input-icon">📝</span>
-                    <input type="text" id="taskName" placeholder="Descripción de la tarea...">
+                    <span class="input-icon" id="taskCategoryIcon">🛠️</span>
+                    <input type="text" id="taskName" placeholder="Descripción o ruta...">
                     <button type="button" class="btn-mic" id="micBtn" onclick="startVoiceRecognition()" title="Dictar por voz">🎤</button>
                 </div>
             </div>
@@ -435,8 +471,29 @@
 
     <script>
         let tasks = JSON.parse(localStorage.getItem('dailyTasksJA')) || [];
+        let selectedCategory = 'work'; // 'work' o 'travel'
 
         document.getElementById('taskDate').valueAsDate = new Date();
+
+        function selectCategory(cat) {
+            selectedCategory = cat;
+            const chipWork = document.getElementById('chipWork');
+            const chipTravel = document.getElementById('chipTravel');
+            const iconEl = document.getElementById('taskCategoryIcon');
+            const inputEl = document.getElementById('taskName');
+
+            if (cat === 'work') {
+                chipWork.classList.add('active');
+                chipTravel.classList.remove('active');
+                iconEl.innerText = '🛠️';
+                inputEl.placeholder = 'Descripción de la tarea...';
+            } else {
+                chipTravel.classList.add('active');
+                chipWork.classList.remove('active');
+                iconEl.innerText = '🚗';
+                inputEl.placeholder = 'Trayecto (ej: Taller a Obra)...';
+            }
+        }
 
         function toggleDrawer() {
             document.getElementById('drawer').classList.toggle('open');
@@ -467,11 +524,12 @@
                 const dur = calculateMinutes(task.start, task.end);
                 total += dur;
                 const fDate = new Date(task.date + 'T00:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+                const icon = task.category === 'travel' ? '🚗' : '🛠️';
 
                 listEl.innerHTML += `
                     <div class="task-card">
                         <div class="task-meta">
-                            <span class="task-title">${task.name}</span>
+                            <span class="task-title">${icon} ${task.name}</span>
                             <span class="task-sub">
                                 <span>📅 ${fDate}</span> | 
                                 <span>⏱️ ${task.start} - ${task.end}</span> 
@@ -489,19 +547,24 @@
 
         function addTask() {
             const date = document.getElementById('taskDate').value;
-            const name = document.getElementById('taskName').value.trim();
+            let name = document.getElementById('taskName').value.trim();
             const start = document.getElementById('startTime').value;
             const end = document.getElementById('endTime').value;
+
+            if (!name && selectedCategory === 'travel') {
+                name = 'Desplazamiento';
+            }
 
             if (!date || !name || !start || !end) {
                 alert('Por favor completa todos los campos.');
                 return;
             }
 
-            tasks.push({ date, name, start, end });
+            tasks.push({ date, name, start, end, category: selectedCategory });
             document.getElementById('taskName').value = '';
             document.getElementById('startTime').value = '';
             document.getElementById('endTime').value = '';
+            selectCategory('work'); // Resetear a trabajo por defecto
             renderTasks();
         }
 
@@ -525,7 +588,8 @@
                 const dur = calculateMinutes(t.start, t.end);
                 total += dur;
                 const fDate = new Date(t.date + 'T00:00:00').toLocaleDateString('es-ES');
-                r += `${i + 1}. [${fDate}] ${t.name}\n   ⏰ ${t.start} - ${t.end} (*${dur} min*)\n`;
+                const icon = t.category === 'travel' ? '🚗' : '🛠️';
+                r += `${i + 1}. [${fDate}] ${icon} ${t.name}\n   ⏰ ${t.start} - ${t.end} (*${dur} min*)\n`;
             });
             r += `-----------------------------------\n⏱️ *Tiempo Total:* ${total} min (${(total/60).toFixed(1)} h)`;
             return r;
@@ -546,10 +610,11 @@
             tasks.forEach(t => {
                 const dur = calculateMinutes(t.start, t.end);
                 total += dur;
+                const icon = t.category === 'travel' ? '🚗 ' : '🛠️ ';
                 tbody.innerHTML += `
                     <tr>
                         <td>${new Date(t.date + 'T00:00:00').toLocaleDateString('es-ES')}</td>
-                        <td><strong>${t.name}</strong></td>
+                        <td><strong>${icon}${t.name}</strong></td>
                         <td>${t.start} - ${t.end}</td>
                         <td>${dur} min</td>
                     </tr>
